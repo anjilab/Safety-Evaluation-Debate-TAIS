@@ -37,6 +37,14 @@ CUDA_VISIBLE_DEVICES=0 python src/main.py --model qwen2.5-7b --num_agents 5 --da
 
 To run Sparse MAD or Centralized MAD, add ``--sparse`` or ``--centralized`` to the command. To run heterogeneous agent settings, add ``--multi_persona``.
 
+By default, experiments now use vLLM for generation-only inference. You can tune vLLM with:
+
+```
+python src/main.py --model qwen2.5-7b --data safety_eval --data_size 100 --tensor_parallel_size 1 --vllm_gpu_memory_utilization 0.9
+```
+
+To fall back to the previous Hugging Face Transformers inference path, pass ``--inference_backend transformers``.
+
 ## Acknowledgement
 
 We thank debate or vote paper for their code from which we explored our work.

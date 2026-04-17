@@ -6,3 +6,7 @@ model_dir/models--meta-llama--Meta-Llama-3.1-8B-Instruct
 model_dir/models--Qwen--Qwen2.5-7B-Instruct
 model_dir/Qwen2.5-7B-Instruct_by_hf
 model_dir/.locks
+
+
+__pycache__/
+*.pyc

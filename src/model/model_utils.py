@@ -7,12 +7,31 @@ model_dirs = {
 }
 
 
+def _ensure_hf_token(args):
+    if hasattr(args, "token"):
+        return
+    try:
+        with open('token', 'r') as f:
+            args.token = f.read().strip()
+    except FileNotFoundError:
+        args.token = None
 
-def engine(messages, agent, num_agents=1, stop_sequences=None):
-    if type(messages[0]) == list :
-        prompts = [agent.tokenizer.apply_chat_template(msgs, tokenize=False, add_generation_prompt=True) for msgs in messages]
-    else :
-        prompts = [msg['content'] for msg in messages]  # we find that NOT using chat template is better in MAD
+
+def _engine_vllm(prompts, agent, stop_sequences=None):
+    from vllm import SamplingParams
+
+    sampling_params = SamplingParams(
+        max_tokens=512,
+        temperature=1.0,
+        top_p=0.9,
+        n=1,
+        stop=stop_sequences,
+    )
+    outputs = agent.llm.generate(prompts, sampling_params)
+    return [output.outputs[0].text for output in outputs]
+
+
+def _engine_transformers(prompts, agent):
     inputs = agent.tokenizer(prompts, return_tensors='pt', padding=True, truncation=True)
 
     input_ids = inputs['input_ids'].to(agent.huggingface_model.device)
@@ -32,25 +51,46 @@ def engine(messages, agent, num_agents=1, stop_sequences=None):
         return_legacy_cache=True
     )
 
-    generated_sequences = outputs.sequences  # shape: (batch_size * num_agents, seq_len)
+    generated_sequences = outputs.sequences
 
     responses = []
-    # for prompt, sequence in zip(prompts, generated_sequences):
     for input_id, sequence in zip(input_ids, generated_sequences):
         gen_only = sequence[len(input_id):]
         decoded = agent.tokenizer.decode(gen_only, skip_special_tokens=True)
         responses.append(decoded)
 
+    return responses
 
-    return responses 
+
+def engine(messages, agent, num_agents=1, stop_sequences=None):
+    if type(messages[0]) == list :
+        prompts = [agent.tokenizer.apply_chat_template(msgs, tokenize=False, add_generation_prompt=True) for msgs in messages]
+    else :
+        prompts = [msg['content'] for msg in messages]  # we find that NOT using chat template is better in MAD
+
+    if getattr(agent, "llm", None) is not None:
+        return _engine_vllm(prompts, agent, stop_sequences=stop_sequences)
+    return _engine_transformers(prompts, agent)
 
 def get_agents(args, peft_path=None):
+    _ensure_hf_token(args)
+    inference_backend = getattr(args, "inference_backend", "vllm")
 
-    if args.model in ['llama3.1-8b', 'llama3.2-1b', 'llama3.2-3b', 'llama3.3-70b']:
+    if inference_backend == "vllm":
+        from model.vllm_wrapper import VLLMWrapper
+        if args.model not in model_dirs:
+            raise ValueError("invalid model!")
+        agent = VLLMWrapper(
+            args,
+            model_dirs[args.model],
+            memory_for_model_activations_in_gb=args.memory_for_model_activations_in_gb,
+            lora_adapter_path=peft_path,
+        )
+    elif args.model in ['llama3.1-8b', 'llama3.2-1b', 'llama3.2-3b', 'llama3.3-70b']:
         from model.llama import LlamaWrapper
         lversion = 3
         agent = LlamaWrapper(args, model_dirs[args.model], memory_for_model_activations_in_gb=args.memory_for_model_activations_in_gb, lora_adapter_path=peft_path, llama_version=lversion)
-    
+
     elif args.model in ['qwen2.5-7b','qwen2.5-32b'] :
         from model.qwen import QwenWrapper
         agent = QwenWrapper(args, model_dirs[args.model], memory_for_model_activations_in_gb=args.memory_for_model_activations_in_gb, lora_adapter_path=peft_path)
@@ -61,7 +101,8 @@ def get_agents(args, peft_path=None):
     # update pad token
     if agent.tokenizer.pad_token is None :
         agent.tokenizer.add_special_tokens({'pad_token': '[PAD]'})
-        agent.huggingface_model.resize_token_embeddings(len(agent.tokenizer))
+        if agent.huggingface_model is not None:
+            agent.huggingface_model.resize_token_embeddings(len(agent.tokenizer))
 
     # Personas: taken from DyLAN: https://arxiv.org/pdf/2310.02170
     if args.multi_persona :

@@ -12,4 +12,8 @@
 # python src/main.py --data safety_eval --model llama3.1-8b --num_agents 5 --data_size 200
 # python src/main.py --data safety_eval --model llama3.1-8b --num_agents 5 --data_size 200 --solver debate --centralized
 # python src/main.py --data safety_eval --model llama3.1-8b --num_agents 5 --data_size 200 --solver debate --sparse
-python src/main.py --data safety_eval --model llama3.1-8b --num_agents 5 --data_size 200 --solver debate --multi_persona
+# python src/main.py --data safety_eval --model llama3.1-8b --num_agents 5 --data_size 200 --solver debate --multi_persona
+
+## For VLLM
+python src/main.py --data safety_eval --model qwen2.5-7b --num_agents 5 --data_size 200 --solver debate --sparse --tensor_parallel_size 1 --vllm_gpu_memory_utilization 0.9
+python src/main.py --data safety_eval --model qwen2.5-7b --num_agents 5 --data_size 200 --solver debate --debate_rounds 5 --multi_persona --tensor_parallel_size 1 --vllm_gpu_memory_utilization 0.9

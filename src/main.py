@@ -17,6 +17,20 @@ from evaluator import get_instruction_suffix, evaluate_arithmetics, evaluate_mcq
 
 
 
+class Tee:
+    def __init__(self, *files):
+        self.files = files
+
+    def write(self, obj):
+        for f in self.files:
+            f.write(obj)
+            f.flush()
+
+    def flush(self):
+        for f in self.files:
+            f.flush()
+
+
 def convert_numpy(obj):
     if isinstance(obj, np.generic):
         return obj.item()
@@ -46,9 +60,13 @@ def get_args():
 
 
     # model
-    parser.add_argument('--model', type=str, default="llama3.1")
+    parser.add_argument('--model', type=str, default="llama3.1-8b")
     parser.add_argument('--model_dir', type=str, default="/home/luffy/projects/anjila_projects/Multi-agent-codes/debate-or-vote/model_dir")
     parser.add_argument('--memory_for_model_activations_in_gb', type=int, default=4)
+    parser.add_argument('--inference_backend', type=str, default="vllm", choices=["vllm", "transformers"])
+    parser.add_argument('--tensor_parallel_size', type=int, default=1)
+    parser.add_argument('--vllm_gpu_memory_utilization', type=float, default=0.9)
+    parser.add_argument('--max_model_len', type=int, default=None)
     parser.add_argument('--verbose', action='store_true')
 
 
@@ -134,6 +152,18 @@ def get_new_message(args, sample, responses, personas=None, suffix=None):
 
 def main(args):
 
+    '''
+    Steps for ANJILA ONLY:
+    1. Load Agents with and without personas depending on args.multi_persona
+    2. Load Data: Our case is safety evaluation data only. 
+    3. Then folder and file saving setup
+    4. Evaluation function setup depending on args.data and args.bae
+    5. Debate loop: 
+        1. For each question, gather initial opinions from agents. 
+        2. Based on persona, message append is different.
+
+    '''
+
     # Load Agents
     agent, personas = get_agents(args) # AGENT = MODEL Object, personas = this is only used when multi_persona is true. 
 
@@ -198,6 +228,8 @@ def main(args):
             messages = [{"role": "user", "content": x + SUFFIX}] * args.num_agents
         responses = engine(messages, agent, args.num_agents)
         agent_responses = dict(zip(agent_names, responses))
+        print(messages, responses, agent_responses)
+        exit()
 
         # evaluate
         if args.centralized :
@@ -355,18 +387,29 @@ def main(args):
 if __name__ == "__main__":
     
     args = get_args()
-    torch.manual_seed(args.seed)
-    np.random.seed(args.seed)
-    random.seed(args.seed)
-    if torch.cuda.is_available():
-        torch.cuda.manual_seed_all(args.seed)
+    log_prefix = f"{args.data or 'run'}_{args.model}_seed{args.seed}"
+    os.makedirs(os.path.join("out", "logs"), exist_ok=True)
+    log_time = datetime.now().strftime("%Y%m%d_%H%M%S")
+    log_path = os.path.join("out", "logs", f"{log_time}_{log_prefix}.log")
+    with open(log_path, "w", buffering=1) as log_file:
+        sys.stdout = Tee(sys.stdout, log_file)
+        sys.stderr = Tee(sys.stderr, log_file)
+        print(f"Terminal log: {log_path}")
+        print("Command: " + " ".join(sys.argv))
 
-    timestamp = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-    args.timestamp = timestamp
+        torch.manual_seed(args.seed)
+        np.random.seed(args.seed)
+        random.seed(args.seed)
+        if args.inference_backend != "vllm": # Without this issuse of spawning process of vllm persists. 
+            if torch.cuda.is_available():
+                torch.cuda.manual_seed_all(args.seed)
 
-    with open('token','r') as f :
-        token = f.read()
-    args.token = token
+        timestamp = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+        args.timestamp = timestamp
 
-    main(args)
+        with open('token','r') as f :
+            token = f.read()
+        args.token = token
+
+        main(args)
     
