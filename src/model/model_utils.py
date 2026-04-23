@@ -28,7 +28,12 @@ def _engine_vllm(prompts, agent, stop_sequences=None):
         stop=stop_sequences,
     )
     outputs = agent.llm.generate(prompts, sampling_params)
-    return [output.outputs[0].text for output in outputs]
+    
+    # Calculate token counts
+    input_tokens = sum(len(agent.tokenizer.encode(p)) for p in prompts)
+    output_tokens = sum(len(output.outputs[0].token_ids) for output in outputs)
+    
+    return [output.outputs[0].text for output in outputs], input_tokens, output_tokens
 
 
 def _engine_transformers(prompts, agent):
@@ -54,12 +59,15 @@ def _engine_transformers(prompts, agent):
     generated_sequences = outputs.sequences
 
     responses = []
+    output_token_count = 0
     for input_id, sequence in zip(input_ids, generated_sequences):
         gen_only = sequence[len(input_id):]
+        output_token_count += len(gen_only)
         decoded = agent.tokenizer.decode(gen_only, skip_special_tokens=True)
         responses.append(decoded)
 
-    return responses
+    input_token_count = input_ids.numel()
+    return responses, input_token_count, output_token_count
 
 
 def engine(messages, agent, num_agents=1, stop_sequences=None):

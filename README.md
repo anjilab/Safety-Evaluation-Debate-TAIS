@@ -1,6 +1,68 @@
 # Safety Evaluation Using Debate 
 
-In this work, we are exploring safety evaluation using debate..
+In this work, we are exploring safety evaluation using debate.
+
+## Multi-Agent Debate Methods
+
+The key distinction among multi-agent debate methods lies in how agents communicate and the roles they assume. We evaluate the following representative approaches: 
+
+### 1. Decentralized MAD (Default)
+**Command:** `python src/main.py --model qwen2.5-7b --num_agents 5 --data safety_eval`
+
+In Decentralized Multi-Agent Debate, each agent observes **all other agents' responses** from the previous round. This creates a fully-connected communication topology where every agent has complete visibility into the entire debate history.
+
+- **Communication Pattern:** All-to-all (fully connected)
+- **Agent Behavior:** Each agent considers all peer opinions when revising their answer
+- **Use Case:** Maximum information sharing, suitable when you want comprehensive deliberation
+- **Parameters:** Set `N` (number of agents) via `--num_agents`, typically N=5
+
+### 2. Sparse MAD
+**Command:** `python src/main.py --model qwen2.5-7b --num_agents 5 --data safety_eval --sparse`
+
+Sparse MAD is a variant of Decentralized MAD with a **sparse communication topology** to enhance efficiency. Each agent only observes responses from their immediate neighbors (previous and next agent in the sequence).
+
+- **Communication Pattern:** Ring topology (each agent sees 2 neighbors)
+- **Agent Behavior:** Each agent considers only adjacent agents' opinions
+- **Use Case:** Reduces token usage and computational cost while maintaining debate dynamics
+- **Efficiency:** Significantly fewer tokens per round compared to Decentralized MAD
+
+### 3. Centralized MAD
+**Command:** `python src/main.py --model qwen2.5-7b --num_agents 5 --data safety_eval --centralized`
+
+In Centralized MAD, a **central agent** aggregates peer responses and generates the updated response at each round, while other agents only respond to the central agent's opinion.
+
+- **Communication Pattern:** Hub-and-spoke (star topology)
+- **Agent Roles:** 
+  - Central agent (Agent 1): Sees all peer responses, synthesizes consensus
+  - Peripheral agents: Only see the central agent's response
+- **Use Case:** Hierarchical decision-making, when one agent should lead the deliberation
+- **Final Answer:** Determined by the central agent's verdict
+
+### 4. Majority Voting (Baseline)
+**Command:** `python src/main.py --model qwen2.5-7b --num_agents 5 --data safety_eval --debate_rounds 0`
+
+Majority Voting aggregates **initial responses** from multiple agents without any debate. This is equivalent to T=0 rounds of debate—agents provide independent judgments and the final answer is determined by majority vote.
+
+- **Communication Pattern:** None (no interaction between agents)
+- **Agent Behavior:** Each agent provides independent initial judgment
+- **Use Case:** Baseline comparison, ensemble without deliberation
+- **Efficiency:** Most token-efficient approach (single round of inference)
+
+### Heterogeneous Agents (Optional)
+**Command:** Add `--multi_persona` to any of the above
+
+When using `--multi_persona`, agents assume different specialized roles (e.g., Critic, Defender, Judge, Analyst, Ethicist for safety evaluation). This creates diversity in perspectives and reasoning approaches.
+
+### Comparison Summary
+
+| Method | Communication | Token Cost | Information Flow | Best For |
+|--------|--------------|------------|------------------|----------|
+| **Decentralized MAD** | All-to-all | High | Every agent sees all opinions | Maximum deliberation quality |
+| **Sparse MAD** | Ring (2 neighbors) | Medium | Limited peer visibility | Balanced efficiency/quality |
+| **Centralized MAD** | Hub-and-spoke | Medium | Central aggregation | Hierarchical decision-making |
+| **Majority Voting** | None | Low (1 round) | No interaction | Cost-efficient baseline |
+
+For all multi-agent approaches, we use **N=5 agents** by default. You can ablate the effect of N using `--num_agents`. For single-agent baselines, results are averaged across 5 independent runs. This methods are same as debate or vote paper. 
 
 ## Requirements Setup
 

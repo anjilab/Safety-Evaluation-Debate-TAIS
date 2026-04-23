@@ -1,5 +1,7 @@
 out/
 token
+data_dir/
+model_dir/
 data_dir/Anthropic___hh-rlhf/
 data_dir/PKU-Alignment___beaver_tails/
 model_dir/models--meta-llama--Meta-Llama-3.1-8B-Instruct
