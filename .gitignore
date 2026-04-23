@@ -12,3 +12,5 @@ model_dir/.locks
 
 __pycache__/
 *.pyc
+
+wandb/

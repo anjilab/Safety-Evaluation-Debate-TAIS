@@ -49,7 +49,9 @@ def get_args():
     parser.add_argument('--wandb_entity', type=str, default=None)
 
     # data
-    parser.add_argument('--data_dir', type=str, default="/media/drive1/anjila/codes/Safety-Evaluation-Debate-TAIS/data_dir")
+    # parser.add_argument('--data_dir', type=str, default="/media/drive1/anjila/codes/Safety-Evaluation-Debate-TAIS/data_dir")
+    parser.add_argument('--data_dir', type=str, default="/media/drive2/anjilabudathoki/codes/Safety-Evaluation-Debate-TAIS/data_dir")
+    
     parser.add_argument('--data', type=str, default='')
     parser.add_argument('--sub_data', type=str, default='')
     parser.add_argument('--data_size', type=int, default=0)
@@ -64,9 +66,11 @@ def get_args():
 
     # model
     parser.add_argument('--model', type=str, default="llama3.1-8b")
-    parser.add_argument('--model_dir', type=str, default="/media/drive1/anjila/codes/Safety-Evaluation-Debate-TAIS/model_dir")
+    # parser.add_argument('--model_dir', type=str, default="/media/drive1/anjila/codes/Safety-Evaluation-Debate-TAIS/model_dir")
+    parser.add_argument('--model_dir', type=str, default="/media/drive2/anjilabudathoki/codes/Safety-Evaluation-Debate-TAIS/model_dir")
+    
     parser.add_argument('--memory_for_model_activations_in_gb', type=int, default=4)
-    parser.add_argument('--inference_backend', type=str, default="vllm", choices=["vllm", "transformers"])
+    parser.add_argument('--inference_backend', type=str, default="transformers", choices=["vllm", "transformers"])
     parser.add_argument('--tensor_parallel_size', type=int, default=1)
     parser.add_argument('--vllm_gpu_memory_utilization', type=float, default=0.9)
     parser.add_argument('--max_model_len', type=int, default=None)
@@ -177,6 +181,7 @@ def main(args):
 
     # Load Agents
     agent, personas = get_agents(args) # AGENT = MODEL Object, personas = this is only used when multi_persona is true. 
+    print('Here')
 
     # Load Data
     test_X, test_Y = load_data(args, split='test')
@@ -423,6 +428,7 @@ def main(args):
 
         # Save to jsonl
         print(len(sample_responses))
+        os.makedirs('out/history', exist_ok=True)
         with open(f'out/history/{fname}.jsonl', 'w') as f:
             for record in sample_responses:
                 f.write(json.dumps(record, default=convert_numpy) + '\n')
@@ -510,9 +516,22 @@ if __name__ == "__main__":
         timestamp = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
         args.timestamp = timestamp
 
-        with open('token','r') as f :
-            token = f.read()
-        args.token = token
+        try:
+            with open('token','r') as f :
+                token = f.read().strip()
+            args.token = token
+        except FileNotFoundError:
+            print('Token file not found')
+            args.token = None
 
-        main(args)
+        try:
+            main(args)
+        except Exception as e:
+            import traceback
+            print("\n" + "="*80)
+            print("ERROR OCCURRED:")
+            print("="*80)
+            traceback.print_exc()
+            print("="*80)
+            sys.exit(1)
     
