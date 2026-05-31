@@ -21,7 +21,7 @@ def _engine_vllm(prompts, agent, stop_sequences=None):
     from vllm import SamplingParams
 
     sampling_params = SamplingParams(
-        max_tokens=512,
+        max_tokens=256,  # Reduced from 512 - safety responses are short
         temperature=1.0,
         top_p=0.9,
         n=1,

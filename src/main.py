@@ -24,12 +24,20 @@ class Tee:
 
     def write(self, obj):
         for f in self.files:
-            f.write(obj)
-            f.flush()
+            try:
+                f.write(obj)
+                f.flush()
+            except (ValueError, OSError):
+                # File is closed or not writable, skip it
+                pass
 
     def flush(self):
         for f in self.files:
-            f.flush()
+            try:
+                f.flush()
+            except (ValueError, OSError):
+                # File is closed, skip it
+                pass
 
 
 def convert_numpy(obj):
@@ -171,13 +179,7 @@ def main(args):
 
     '''
 
-    # Initialize Weights & Biases
-    wandb.init(
-        project=args.wandb_project,
-        entity=args.wandb_entity,
-        name=f"{args.data}_{args.data_size}__{args.model}_N={args.num_agents}_R={args.debate_rounds}",
-        config=vars(args)
-    )
+    
 
     # Load Agents
     agent, personas = get_agents(args) # AGENT = MODEL Object, personas = this is only used when multi_persona is true. 
@@ -193,6 +195,14 @@ def main(args):
     elif args.centralized : fname += '_CENTRAL'
     if args.bae : fname += '_BAE'
     if args.multi_persona : fname += '_HETERO'
+    
+    # Initialize Weights & Biases
+    wandb.init(
+        project=args.wandb_project,
+        entity=args.wandb_entity,
+        name=fname,
+        config=vars(args)
+    )
 
     agent_names = []
     for i in range(args.num_agents):
@@ -308,8 +318,6 @@ def main(args):
             agent_correct = round_data['final_answer_iscorr'][idx]
             wandb_log[f'sample_{i}/round_0/agent_verdict/{agent_name}'] = str(answer)
             wandb_log[f'sample_{i}/round_0/agent_correct/{agent_name}'] = float(agent_correct)
-        for agent_name, response in agent_responses.items():
-            wandb_log[f'sample_{i}/round_0/response/{agent_name}'] = response
         if args.data in ['safety_eval']:
             wandb_log[f'sample_{i}/category'] = args.safety_categories[i]
         wandb.log(wandb_log)
@@ -416,8 +424,6 @@ def main(args):
                     print(f"  └─ {agent_name} FLIPPED: {prev_answers[idx]} → {answer}")
                 else:
                     wandb_log[f'sample_{i}/round_{r}/agent_flipped/{agent_name}'] = 0
-            for agent_name, response in agent_responses.items():
-                wandb_log[f'sample_{i}/round_{r}/response/{agent_name}'] = response
             wandb.log(wandb_log)
             
             # Update previous answers for next round
