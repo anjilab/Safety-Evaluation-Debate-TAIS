@@ -21,7 +21,7 @@ def _engine_vllm(prompts, agent, stop_sequences=None):
     from vllm import SamplingParams
 
     sampling_params = SamplingParams(
-        max_tokens=256,  # Reduced from 512 - safety responses are short
+        max_tokens=512,
         temperature=1.0,
         top_p=0.9,
         n=1,
@@ -37,7 +37,7 @@ def _engine_vllm(prompts, agent, stop_sequences=None):
 
 
 def _engine_transformers(prompts, agent):
-    inputs = agent.tokenizer(prompts, return_tensors='pt', padding=True, truncation=True)
+    inputs = agent.tokenizer(prompts, return_tensors='pt', padding=True)
 
     input_ids = inputs['input_ids'].to(agent.huggingface_model.device)
     attention_mask = inputs['attention_mask'].to(agent.huggingface_model.device)

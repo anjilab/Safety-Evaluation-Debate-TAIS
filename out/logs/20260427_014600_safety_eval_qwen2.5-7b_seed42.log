@@ -1,0 +1,14 @@
+Terminal log: out/logs/20260427_014600_safety_eval_qwen2.5-7b_seed42.log
+Command: src/main.py --data safety_eval --model qwen2.5-7b --num_agents 5 --data_size 200 --debate_rounds 5 --sparse --tensor_parallel_size 1 --vllm_gpu_memory_utilization 0.9
+wandb: [wandb.login()] Loaded credentials for https://api.wandb.ai from /home/anjilabudathoki/.netrc.
+wandb: Currently logged in as: anzilabudathoki (research-llms-learn) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: setting up run yhxdp7iu
+wandb: Tracking run with wandb version 0.26.0
+wandb: Run data is saved locally in /media/drive2/anjilabudathoki/codes/Safety-Evaluation-Debate-TAIS/wandb/run-20260427_014600-yhxdp7iu
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run safety_eval_200__qwen2.5-7b_N=5_R=5
+wandb:  View project at https://wandb.ai/research-llms-learn/safety-evaluation-debate
+wandb:  View run at https://wandb.ai/research-llms-learn/safety-evaluation-debate/runs/yhxdp7iu
+Loading checkpoint shards:   0%|          | 0/4 [00:00<?, ?it/s]Loading checkpoint shards:  25%|##5       | 1/4 [00:00<00:01,  1.93it/s]Loading checkpoint shards:  50%|#####     | 2/4 [00:00<00:00,  2.02it/s]Loading checkpoint shards:  75%|#######5  | 3/4 [00:01<00:00,  2.05it/s]Loading checkpoint shards: 100%|##########| 4/4 [00:01<00:00,  2.15it/s]Loading checkpoint shards: 100%|##########| 4/4 [00:01<00:00,  2.10it/s]
+Device set to use cuda:0
+Here

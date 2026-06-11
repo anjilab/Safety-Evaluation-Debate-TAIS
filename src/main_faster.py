@@ -261,6 +261,9 @@ def main(args):
     if args.multi_persona : fname += '_HETERO'
     if args.agent_selection.lower() not in ["none", ""]:
         fname += f'_{args.agent_selection.upper()}'
+    fname += f'_{args.inference_backend.upper()}'
+    if args.inference_backend == "vllm" and args.max_model_len is not None:
+        fname += f'_MLEN{args.max_model_len}'
     fname += '_BATCHED'
     
      # Initialize Weights & Biases
@@ -676,7 +679,9 @@ def main(args):
 if __name__ == "__main__":
     
     args = get_args()
-    log_prefix = f"{args.data or 'run'}_{args.model}_seed{args.seed}_batched"
+    log_prefix = f"{args.data or 'run'}_{args.model}_seed{args.seed}_{args.inference_backend}_batched"
+    if args.inference_backend == "vllm" and args.max_model_len is not None:
+        log_prefix += f"_mlen{args.max_model_len}"
     os.makedirs(os.path.join("out", "logs_faster"), exist_ok=True)
     log_time = datetime.now().strftime("%Y%m%d_%H%M%S")
     log_path = os.path.join("out", "logs_faster", f"{log_time}_{log_prefix}.log")

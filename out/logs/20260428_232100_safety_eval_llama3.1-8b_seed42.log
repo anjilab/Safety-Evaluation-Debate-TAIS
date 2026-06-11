@@ -1,0 +1,2 @@
+Terminal log: out/logs/20260428_232100_safety_eval_llama3.1-8b_seed42.log
+Command: src/main.py --data safety_eval --model llama3.1-8b --num_agents 5 --data_size 200 --debate_rounds 0 --solver vote --multi_persona

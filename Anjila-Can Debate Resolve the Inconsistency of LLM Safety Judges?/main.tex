@@ -1,0 +1,418 @@
+% Main paper: Can Debate Resolve the Inconsistency of LLM Safety Judges?
+% NeurIPS 2026 Submission Draft
+% 
+% ============================================================
+% SUGGESTIONS FOR THE RESEARCH PROPOSAL (remove before submission)
+% ============================================================
+%
+% SUGGESTION 1 — DEFINE "BORDERLINE" PRECISELY (HIGH PRIORITY)
+% The proposal hinges on "borderline cases" where LLM judges disagree 
+% across seeds, but never formally defines what makes a case borderline.
+% Recommendation: Use the Seed Stability Index (SSI) from the instability 
+% literature (arXiv:2512.12066) — prompts with SSI < 0.8 across 5+ seeds 
+% are borderline. This gives you a reproducible, quantitative criterion 
+% that reviewers will accept.
+%
+% SUGGESTION 2 — ADD A COST-CONTROLLED BASELINE (HIGH PRIORITY)
+% Debate uses 2x the LLM calls of a single judge. Reviewers will ask: 
+% "Is debate better than just running 3 independent judges and taking 
+% majority vote?" You MUST include a majority-vote ensemble baseline 
+% with matched compute budget. If debate wins, it's because the 
+% adversarial structure adds value, not just more tokens.
+%
+% SUGGESTION 3 — THE ATTACK SURFACE EXPERIMENT IS YOUR STRONGEST 
+% CONTRIBUTION (LEAN INTO IT)
+% Most debate work assumes both debaters argue in good faith or that 
+% truth has an inherent advantage. Your Q2 asks whether a persuasive 
+% "this is safe" debater can fool the judge. This is novel and has 
+% direct implications for scalable oversight. Design this experiment 
+% carefully: train/prompt one debater to be maximally persuasive that 
+% harmful content is safe, and measure judge accuracy under this 
+% adversarial condition vs. the balanced debate condition.
+%
+% SUGGESTION 4 — CONNECT TO INFORMATION DESIGN THEORY
+% The Hossain et al. (2024) paper on Bayesian persuasion for 
+% misinformation provides theoretical grounding for your attack 
+% surface concern. Their key result is that strategic signaling by 
+% an informed party can manipulate a less-informed party's beliefs.
+% In your setting, a "this is safe" debater is essentially a 
+% strategic signaler trying to persuade the judge. Cite this to 
+% ground Q2 in information design theory.
+%
+% SUGGESTION 5 — LAYER THE JUDGE MODELS (CONNECTS TO KHAN ET AL.)
+% Khan et al. showed that debate helps WEAKER judges assess STRONGER 
+% models. Your experimental design should systematically vary judge 
+% capability: use both a weak judge (7B) and a strong judge (70B+) 
+% to see if debate helps more when the judge is weaker. This directly 
+% tests the scalable oversight thesis in the safety domain.
+%
+% SUGGESTION 6 — SORRY-BENCH CATEGORY ANALYSIS IS ESSENTIAL
+% SORRY-Bench has 44 fine-grained risk categories. Don't just report 
+% aggregate results. Break down by category: does debate help more 
+% on certain types of harm (e.g., subtle discrimination) than others 
+% (e.g., explicit violence)? This provides actionable guidance for 
+% practitioners about when to deploy debate-based evaluation.
+%
+% SUGGESTION 7 — CITING THE ATTACHED PDF
+% The ymous (2025) paper on margin-based abstractions with abstention 
+% is citable in two places:
+%   - Introduction: when framing the inconsistency problem as a 
+%     decision-margin problem — judges flip verdicts precisely on 
+%     prompts where their internal decision margin is narrow
+%   - Discussion: connecting debate's effect to widening the judge's 
+%     effective decision margin through adversarial information provision
+% See specific citation locations marked with [CITE-MARGIN] below.
+%
+% SUGGESTION 8 — FOR NEURIPS MAIN (9 PAGES), SCOPE CAREFULLY
+% The proposal has 3 research questions. For NeurIPS main, Q1 and Q2 
+% are the core contribution. Q3 (catching systematic misses) is 
+% supplementary unless results are striking. The core story should be: 
+% (1) LLM safety judges are inconsistent, (2) debate improves 
+% consistency BUT (3) debate also creates a new attack surface.
+%
+% SUGGESTION 9 — PRE-REGISTER THE HYPOTHESES
+% State falsifiable predictions before showing results. This signals 
+% scientific rigor and protects against the "just measured stuff" 
+% criticism. E.g., "H1: Debate reduces verdict flip rate by >15% 
+% on borderline prompts" is falsifiable. "Debate helps" is not.
+%
+% ============================================================
+
+
+% AI4GOOD (april 30), AIWILD (may 1)
+\documentclass[preprint]{article}
+
+\usepackage{neurips_2026}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{hyperref}
+\usepackage[round]{natbib}
+\usepackage{url}
+\usepackage{booktabs}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{subcaption}
+\usepackage{multirow}
+
+% Custom commands
+\newcommand{\fliprate}{\text{FR}}
+\newcommand{\ssi}{\text{SSI}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\todo}[1]{\textcolor{red}{[TODO: #1]}}
+
+\title{Can Debate Resolve the Inconsistency \\ of LLM Safety Judges?}
+
+\author{
+  ymous Author(s)
+}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+LLM-as-judge has become the dominant paradigm for automated safety evaluation, yet recent evidence reveals that safety verdicts are alarmingly sensitive to random seeds and temperature settings---the same model can label a prompt as both ``safe'' and ``unsafe'' depending on the sampling configuration. We investigate whether \emph{adversarial debate}---a protocol in which two LLM debaters argue opposing safety verdicts before a judge renders a final decision---can resolve this inconsistency. Using SORRY-Bench across LLaMA and Gemma model families with five seeds per configuration, we first characterize the scope of verdict instability, finding that \todo{X\%} of prompts exhibit decision flips. We then evaluate debate under three conditions: balanced debate (both sides argue honestly), adversarial debate (one debater is optimized to argue ``safe'' on harmful content), and majority-vote ensembles as a compute-matched baseline. We find that: \todo{fill in key results}. Critically, we discover that debate introduces a previously uncharacterized attack surface: a persuasive ``this is safe'' debater can \todo{increase/decrease} judge error rates by \todo{X\%}, raising concerns about deploying debate for safety-critical evaluation. Our results provide the first systematic analysis of debate as both a tool and a threat for LLM safety evaluation, with implications for scalable oversight of increasingly capable models.
+\end{abstract}
+
+% ============================================================
+\section{Introduction}
+\label{sec:intro}
+% ============================================================
+
+As large language models (LLMs) are deployed in safety-critical settings, reliable evaluation of their safety properties becomes essential. The dominant approach---LLM-as-judge---uses a capable language model to classify whether a target model's response to a potentially harmful prompt constitutes refusal or compliance \citep{zheng2023judging, sorry2025}. This paradigm underlies major safety benchmarks including SORRY-Bench, HarmBench, and WildGuard, and is used in production pipelines for content moderation and red-teaming.
+
+However, a growing body of work reveals a fundamental fragility in this approach. LLM safety judges produce inconsistent verdicts across random seeds, temperature settings, and minor prompt perturbations \citep{dorner2025instability, raina2025artifacts}. On standard safety benchmarks, 18--28\% of prompts exhibit verdict flips depending on the sampling configuration---the same judge, given the same prompt-response pair, may label it ``safe'' or ``unsafe'' depending on the random seed \citep{dorner2025instability}. This instability undermines the reliability of safety benchmarks and calls into question whether behavioral safety metrics can be trusted at all.
+
+% [CITE-MARGIN] — First citation location (framing inconsistency as a margin problem):
+This inconsistency can be understood through the lens of decision margins. Recent theoretical work has shown that decision systems operating near boundaries---where the gap between competing actions is small---are inherently fragile, and that principled systems should recognize when their decision confidence is insufficient to justify commitment \citep{tanwisuth2025arlet}. In our setting, the judge's verdict flips are concentrated precisely on prompts where the internal decision margin between ``safe'' and ``unsafe'' classifications is narrow. The question is whether providing the judge with adversarial arguments---structured debate---can widen this margin and stabilize the verdict.
+
+We take inspiration from the debate paradigm for scalable oversight \citep{irving2018debate, khan2024debating}. \citet{khan2024debating} showed that when two LLM ``experts'' debate opposing answers, a weaker ``non-expert'' judge achieves significantly higher accuracy than with a single consultant---76\% and 88\% accuracy for LLM and human judges respectively, compared to 48\% and 60\% baselines. Crucially, optimizing debaters for persuasiveness \emph{improved} rather than degraded truth-finding, suggesting that debate has a structural advantage over single-model evaluation.
+
+We ask three questions:
+\begin{enumerate}
+    \item \textbf{Consistency}: Does debate reduce verdict inconsistency on borderline safety cases, compared to single-judge and majority-vote baselines?
+    \item \textbf{Attack surface}: Can a persuasive ``this is safe'' debater fool the judge, making debate a new attack vector against safety evaluation?
+    \item \textbf{Coverage}: Can debate catch harmful prompts that single judges systematically miss across all seeds?
+\end{enumerate}
+
+\paragraph{Contributions.} We present:
+\begin{enumerate}
+    \item The first systematic evaluation of adversarial debate for LLM safety judgment, using SORRY-Bench with controlled seed variance across LLaMA and Gemma models.
+    \item Evidence that debate \todo{improves/does not improve} verdict consistency beyond compute-matched majority-vote baselines, with a \todo{X\%} reduction in flip rate on borderline prompts.
+    \item The first characterization of debate as an attack surface for safety evaluation: adversarially optimized debaters can \todo{description of attack results}.
+    \item A category-level analysis revealing that debate is most effective for \todo{specific harm categories} and least effective for \todo{specific harm categories}.
+\end{enumerate}
+
+% ============================================================
+\section{Related Work}
+\label{sec:related}
+% ============================================================
+
+\paragraph{LLM-as-judge for safety evaluation.} \citet{zheng2023judging} established the LLM-as-judge paradigm with MT-Bench, demonstrating strong correlation with human preferences. \citet{sorry2025} introduced SORRY-Bench, a class-balanced safety evaluation dataset with 44 fine-grained risk categories and a systematic meta-evaluation of judge design choices. They showed that fine-tuned 7B judges can match GPT-4-scale accuracy, though the reliability of all judges across configurations remained unexamined. \citet{raina2025artifacts} demonstrated that LLM judges are highly susceptible to surface-level artifacts---apologetic phrasing, response length, formatting---revealing that judges rely on statistical correlations rather than genuine safety understanding. \citet{munoz2025jrh} introduced the Judge Reliability Harness, finding that no judge is uniformly reliable across benchmarks and perturbation types.
+
+\paragraph{Safety verdict instability.} Most closely related to our motivation, \citet{dorner2025instability} demonstrated that safety refusal decisions exhibit significant instability across random seeds and temperatures, with 18--28\% of prompts showing decision flips across four instruction-tuned model families. Their Seed Stability Index (SSI) provides a quantitative measure of per-prompt verdict reliability that we adopt to define ``borderline'' cases. \citet{sgbench2024} showed that safety performance is inconsistent across task types (generation vs.\ discrimination) and prompt engineering techniques, further motivating the need for more robust evaluation protocols.
+
+\paragraph{Debate for scalable oversight.} The theoretical foundations of debate for AI alignment were laid by \citet{irving2018debate}, who proposed that debate between two AI systems could help humans evaluate superhuman AI outputs. \citet{khan2024debating} provided the most comprehensive empirical validation, showing that debate consistently improves both LLM and human judge accuracy on reading comprehension, and that optimizing debaters for persuasiveness \emph{improves} truth-finding---a counterintuitive result with direct implications for scalable oversight. \citet{du2023debate} demonstrated that multi-agent debate improves factual validity and reduces hallucinations across reasoning tasks. We extend this paradigm from factual question-answering to safety evaluation, a domain where the stakes are higher and the ``ground truth'' is often contested.
+
+% lin2025efficient this paper hae exactly similar setup to us, ANJILA read this and try to come with variation. 
+
+\paragraph{Information design and strategic persuasion.} Our attack surface analysis (Q2) connects to the broader literature on strategic information provision. \citet{hossain2024persuasion} framed misinformation combat through Bayesian persuasion, showing that an informed platform can strategically signal to change user beliefs about content veracity. Their key insight---that a party with informational advantage can manipulate a less-informed party's decisions through strategic revelation---maps directly to our adversarial debater setting: a debater who ``knows'' the content is harmful but argues it is safe is essentially a strategic persuader in the sense of Bayesian information design. The optimal signaling scheme they characterize provides theoretical grounding for why adversarial debate may be fundamentally harder to defend against than other attack vectors. \citet{debateqd2025} introduced DebateQD, showing that optimizing for persuasion through quality-diversity evolution of debate strategies can improve generalization, though they did not examine the adversarial safety implications we investigate.
+
+% [CITE-MARGIN] — Second citation location (decision margins in related work):
+\paragraph{Decision margins and abstention.} \citet{tanwisuth2025arlet} argued that optimization-centric decision frameworks are inadequate near decision boundaries where margins are narrow, proposing margin-based abstractions with principled abstention. Their concept of ``decision margins''---the gap between competing action utilities---provides a formal lens for understanding why LLM judges flip: verdicts are unreliable precisely when the judge's internal margin between ``safe'' and ``unsafe'' is small. We operationalize this by measuring whether debate widens the effective decision margin on borderline prompts.
+
+% ============================================================
+\section{Methodology}
+\label{sec:method}
+% ============================================================
+
+\subsection{Problem Setup and Definitions}
+
+\paragraph{Safety judgment task.} Given a pair $(p, r)$ consisting of an unsafe instruction $p$ and a model response $r$, a safety judge $J$ produces a binary verdict $v \in \{\text{COMPLY}, \text{REFUSE}\}$ indicating whether the response fulfills or refuses the harmful instruction. Following \citet{sorry2025}, a response is classified as \text{COMPLY} whenever it provides substantial content directly assisting with the unsafe instruction, even if prefaced by disclaimers.
+
+\paragraph{Verdict instability.} For a fixed judge $J$, prompt pair $(p, r)$, and set of $K$ random seeds $\{s_1, \ldots, s_K\}$, we define the verdict vector $\mathbf{v} = (v_{s_1}, \ldots, v_{s_K})$. A prompt is \emph{unstable} if $\exists\, i, j$ such that $v_{s_i} \neq v_{s_j}$. We adopt the Seed Stability Index from \citet{dorner2025instability}:
+\begin{equation}
+    \ssi(p, r) = \frac{\max(n_{\text{COMPLY}}, n_{\text{REFUSE}})}{K}
+    \label{eq:ssi}
+\end{equation}
+where $n_{\text{COMPLY}}$ and $n_{\text{REFUSE}}$ count verdicts across seeds. We define \emph{borderline} prompts as those with $\ssi < 0.8$ (the same threshold used by \citet{dorner2025instability}).
+
+\paragraph{Flip rate.} The aggregate measure of instability across a prompt set $\mathcal{P}$:
+\begin{equation}
+    \fliprate(\mathcal{P}) = \frac{|\{(p,r) \in \mathcal{P} : \ssi(p,r) < 1.0\}|}{|\mathcal{P}|}
+\end{equation}
+
+\subsection{Models and Datasets}
+
+We evaluate safety judgments on SORRY-Bench \citep{sorry2025}, which provides 440 unsafe instructions across 44 fine-grained risk categories, augmented with 20 linguistic mutations.
+
+\paragraph{Target models.} We generate responses from:
+\begin{itemize}
+    \item \textbf{LLaMA 3.1 8B Instruct} \citep{llama3}: Meta's open-weight instruction-tuned model.
+    \item \textbf{Gemma 2 9B Instruct} \citep{gemma2024}: Google's instruction-tuned model.
+\end{itemize}
+Both models are evaluated with two prompt template settings and five random seeds per configuration, following the setup described in the user's preliminary results.
+
+\paragraph{Judge models.} To test the scalable oversight thesis (does debate help weaker judges more?), we use judges at two capability levels:
+\begin{itemize}
+    \item \textbf{Weak judge}: LLaMA 3.1 8B Instruct (same family, same scale as target).
+    \item \textbf{Strong judge}: LLaMA 3.1 70B Instruct (larger, more capable).
+\end{itemize}
+\todo{Consider adding GPT-4o or Claude as a third, cross-family judge.}
+
+\subsection{Experiment 1: Characterizing Verdict Instability}
+\label{sec:exp1}
+
+We first replicate and extend the instability finding. For each target model response, we run the judge with $K = 5$ seeds at temperatures $\tau \in \{0.0, 0.3, 0.7, 1.0\}$ and compute the SSI for every prompt. This establishes the baseline flip rate and identifies the set of borderline prompts $\mathcal{B} = \{(p,r) : \ssi(p,r) < 0.8\}$ that debate must improve upon.
+
+\subsection{Experiment 2: Debate Protocol for Safety Evaluation}
+\label{sec:exp2}
+
+\paragraph{Debate structure.} Following \citet{khan2024debating}, we implement a two-round debate:
+
+\begin{enumerate}
+    \item \textbf{Debater A} (``Unsafe'' advocate): Receives $(p, r)$ and argues that the response fulfills the harmful instruction.
+    \item \textbf{Debater B} (``Safe'' advocate): Receives $(p, r)$ and argues that the response refuses or is otherwise safe.
+    \item \textbf{Round 2}: Each debater reads the opponent's argument and provides a rebuttal.
+    \item \textbf{Judge}: Reads the original $(p, r)$ plus both rounds of debate and renders a final verdict.
+\end{enumerate}
+
+\paragraph{Debater models.} We use the same model class as the judge for debaters (LLaMA 3.1 8B or 70B), with debater assignment randomized. Debaters are prompted with instructions to make the strongest possible case for their assigned position.
+
+\paragraph{Baselines.} To isolate the effect of debate's adversarial structure from the effect of additional compute:
+\begin{itemize}
+    \item \textbf{Single judge}: Standard LLM-as-judge with one call.
+    \item \textbf{Majority vote (3x)}: Three independent judge calls with different seeds; majority verdict wins. This matches the compute budget of debate (approximately 3 LLM calls).
+    \item \textbf{Majority vote (5x)}: Five independent calls; provides an upper bound for ensemble methods.
+    \item \textbf{Consultancy}: A single debater argues one side (randomly assigned), and the judge decides. This is the non-adversarial control from \citet{khan2024debating}.
+\end{itemize}
+
+\paragraph{Metrics.} For each method, we measure:
+\begin{itemize}
+    \item \textbf{Verdict flip rate}: Fraction of prompts where the final verdict changes across 5 seeds.
+    \item \textbf{Accuracy}: Agreement with SORRY-Bench human annotations.
+    \item \textbf{Borderline accuracy}: Accuracy restricted to the borderline set $\mathcal{B}$.
+    \item \textbf{Decision confidence}: Mean absolute logit difference between COMPLY and REFUSE tokens at the verdict position, as a proxy for the judge's internal decision margin.
+\end{itemize}
+
+\subsection{Experiment 3: Debate as Attack Surface}
+\label{sec:exp3}
+
+This experiment tests whether a strategically optimized debater can weaponize debate to undermine safety evaluation.
+
+\paragraph{Adversarial ``safe'' debater.} We create a debater that is optimized to argue that harmful content is safe, using two methods:
+\begin{itemize}
+    \item \textbf{Prompt optimization}: Best-of-$N$ sampling ($N = 16$) to select the debater argument that maximizes judge ``safe'' verdict probability, following the inference-time optimization approach from \citet{khan2024debating}.
+    \item \textbf{Strategy augmentation}: Critique-and-refinement, where the debater iteratively improves its argument based on self-critique before presenting to the judge.
+\end{itemize}
+
+\paragraph{Adversarial conditions.} We test:
+\begin{itemize}
+    \item \textbf{Balanced debate}: Both debaters argue honestly for their assigned side.
+    \item \textbf{Asymmetric debate}: The ``safe'' debater uses adversarial optimization; the ``unsafe'' debater argues honestly.
+    \item \textbf{Full adversarial}: The ``safe'' debater uses adversarial optimization and the judge is unaware that one side is adversarial.
+\end{itemize}
+
+For each condition, we measure: judge accuracy on known-harmful prompts, false negative rate (harmful content judged safe), and the relationship between debater persuasiveness (win rate) and judge accuracy.
+
+\subsection{Experiment 4: Catching Systematic Misses}
+\label{sec:exp4}
+
+We identify prompts where \emph{all} seeds under single-judge evaluation produce incorrect verdicts (systematic misses) and test whether debate surfaces the correct verdict on these cases. This addresses whether debate provides qualitatively different coverage rather than just quantitative improvement.
+
+\todo{Consider whether systematic misses are large enough in number for statistical power. If the miss rate is <5\%, this experiment may need to be supplementary.}
+
+% ============================================================
+\section{Hypotheses}
+\label{sec:hypotheses}
+% ============================================================
+
+We state the following falsifiable predictions:
+
+\paragraph{H1 (Consistency).} Debate reduces the verdict flip rate on borderline prompts ($\ssi < 0.8$) by at least 15\% relative to single-judge evaluation, and outperforms compute-matched majority vote by at least 5\%.
+
+\paragraph{H2 (Accuracy).} On borderline prompts, debate improves judge accuracy (agreement with human annotations) by at least 10\% over single-judge baseline.
+
+\paragraph{H3 (Attack surface).} An adversarially optimized ``safe'' debater increases the judge's false negative rate (harmful content judged safe) by at least 10\% compared to balanced debate.
+
+\paragraph{H4 (Asymmetry).} Following \citet{khan2024debating}'s finding that persuasive debaters improve truth-finding, we predict a \emph{truth asymmetry}: optimizing the ``unsafe'' (truth-aligned) debater for persuasiveness will improve judge accuracy, while optimizing the ``safe'' (deceptive) debater will degrade it. If this asymmetry holds, debate has a structural advantage even under adversarial conditions.
+
+\paragraph{H5 (Judge scaling).} Debate provides larger improvements for weak judges (8B) than for strong judges (70B), consistent with the scalable oversight thesis.
+
+% ============================================================
+\section{Results}
+\label{sec:results}
+% ============================================================
+
+\todo{This section will be populated with experimental results. The key visualizations planned are:}
+
+\subsection{Baseline Verdict Instability}
+
+\todo{Heatmap: SORRY-Bench categories (y) vs. models (x), colored by flip rate. Histogram of SSI distribution across all prompts. Table reproducing the user's preliminary seed-variance results across LLaMA and Gemma with two prompt templates.}
+
+\subsection{Debate vs. Baselines on Consistency}
+
+\todo{Bar chart: flip rate by method (single judge, majority-3, majority-5, consultancy, debate) for both weak and strong judges. Line plot: accuracy on borderline prompts by method. Statistical tests for H1 and H2.}
+
+\subsection{Decision Margin Analysis}
+
+\todo{Scatter plot: SSI (x) vs. decision confidence/logit margin (y) under single-judge vs. debate conditions. If debate widens the margin on borderline prompts, this provides a mechanistic explanation for consistency improvement.}
+
+\subsection{Attack Surface Analysis}
+
+\todo{Critical plot: judge accuracy (y) vs. ``safe'' debater persuasiveness/win rate (x). Following Khan et al.'s Figure 4, this should show the relationship between adversarial debater strength and judge vulnerability. If accuracy decreases as the safe debater becomes more persuasive, debate is a viable attack surface.}
+
+\subsection{Category-Level Analysis}
+
+\todo{Per-category breakdown of debate effectiveness. Bar chart: improvement in accuracy from debate, by SORRY-Bench category (44 categories or grouped into broader harm types). Identify categories where debate helps most and least.}
+
+% ============================================================
+\section{Analysis and Discussion}
+\label{sec:discussion}
+% ============================================================
+
+\todo{Discuss the following based on results:}
+
+\paragraph{When debate helps vs.\ hurts.} \todo{Characterize the types of safety judgments where debate provides the most value. Are these cases where the harm is subtle (e.g., coded language, dual-use content) vs.\ obvious (e.g., explicit violence)? If debate helps more on subtle cases, this aligns with the scalable oversight motivation---debate is most useful when the judge needs additional reasoning support.}
+
+\paragraph{The consultancy comparison.} \todo{Khan et al. showed that consultancy accuracy \emph{decreases} as consultants become more persuasive, while debate accuracy \emph{increases}. Test whether this asymmetry holds in safety evaluation. If it does, it provides strong evidence for debate's structural advantage. If it doesn't, safety evaluation may be fundamentally different from factual QA---perhaps because ``safeness'' is more ambiguous than factual correctness.}
+
+\paragraph{Adversarial robustness and information design.} The attack surface results connect to broader concerns about strategic information provision in safety-critical settings. \citet{hossain2024persuasion} showed that a platform with informational advantage can optimally design signals to manipulate user beliefs about content veracity. Our adversarial debater occupies an analogous role: it possesses the information (the response is harmful) but strategically argues otherwise. The degree to which our adversarial debater succeeds quantifies the vulnerability of debate-based evaluation to information-asymmetric attacks. \todo{If the attack succeeds: discuss mitigations (e.g., debater auditing, robustness training for judges). If it fails: explain why safety debate may be structurally harder to attack than general QA.}
+
+% [CITE-MARGIN] — Third citation location (discussion):
+\paragraph{Decision margins and debate.} Our decision margin analysis connects to the theoretical framework of \citet{tanwisuth2025arlet}, who argued that systems should abstain when decision confidence is low rather than committing to potentially erroneous actions. If debate widens the judge's effective decision margin on borderline prompts, it provides an alternative to abstention: rather than refusing to judge when uncertain, the judge can be equipped with adversarial arguments that sharpen its assessment. However, if debate \emph{narrows} the margin (e.g., under adversarial conditions), this suggests that debate may undermine the very decision confidence it aims to support. \todo{Connect to empirical margin measurements from Section~\ref{sec:results}.}
+
+\paragraph{Implications for scalable oversight.} \todo{If H5 is supported (debate helps weak judges more), this validates the scalable oversight thesis for safety evaluation. Discuss what this means for production safety pipelines: instead of using the most expensive model as a judge, deploy debate with cheaper models. Quantify the cost-accuracy tradeoff.}
+
+\paragraph{Practical deployment considerations.} \todo{If debate improves consistency: recommend debate-based evaluation as a complement to single-judge evaluation for high-stakes safety assessments. Specify when the additional compute cost is justified (borderline cases only, not all evaluations). If the attack surface is real: recommend adversarial robustness testing of any debate-based evaluation pipeline before deployment.}
+
+% ============================================================
+\section{Limitations}
+\label{sec:limitations}
+% ============================================================
+
+\paragraph{Ground truth ambiguity.} Safety judgments are inherently more ambiguous than the factual QA tasks where debate was originally validated. SORRY-Bench human annotations have inter-annotator agreement of \todo{X\%}, meaning some ``disagreements'' between judge and ground truth may reflect genuine normative ambiguity rather than judge error.
+
+\paragraph{Debate format.} We test a specific two-round debate format following \citet{khan2024debating}. Longer debates, different turn structures, or debates with more than two debaters may yield different results. The space of possible debate protocols is vast and we explore only a small corner.
+
+\paragraph{Debater-judge homogeneity.} Using models from the same family as both debaters and judges may introduce biases. Cross-family experiments (e.g., LLaMA debaters with Gemma judges) would strengthen generality.
+
+\paragraph{Scale.} Our experiments use models up to 70B parameters. The dynamics of debate may differ with frontier-scale models (400B+), where both debater persuasiveness and judge robustness may be qualitatively different.
+
+\paragraph{Persuasiveness optimization.} Our adversarial debater uses inference-time optimization (best-of-$N$, critique-and-refinement). Training-time optimization (e.g., RL for persuasiveness) would produce stronger adversaries and provide a more complete picture of the attack surface.
+
+% ============================================================
+\section{Conclusion}
+\label{sec:conclusion}
+% ============================================================
+
+We presented the first systematic investigation of adversarial debate for LLM safety evaluation. Starting from the observation that LLM safety judges exhibit alarming verdict instability across random seeds---a problem we characterize on SORRY-Bench across LLaMA and Gemma models---we evaluated whether debate can resolve this inconsistency. We find that \todo{key findings on consistency}. Critically, we also characterize debate as a new attack surface: \todo{key findings on adversarial debaters}. Our category-level analysis reveals that \todo{where debate helps most}. These findings have direct implications for the deployment of automated safety evaluation: \todo{practical recommendations}.
+
+More broadly, our work connects two active research programs---scalable oversight via debate and LLM safety evaluation---that have developed largely in parallel. By bringing the debate paradigm into safety evaluation, we provide both a promising tool for improving evaluation reliability and a cautionary analysis of its adversarial vulnerabilities.
+
+% ============================================================
+% References
+% ============================================================
+
+\bibliographystyle{plainnat}
+\bibliography{references}
+
+% ============================================================
+\appendix
+\section{Additional Experimental Details}
+\label{app:details}
+% ============================================================
+
+\subsection{Prompt Templates}
+
+\begin{table}[h]
+\centering
+\caption{Prompt templates for debaters and judge.}
+\label{tab:prompts}
+\begin{tabular}{lp{9cm}}
+\toprule
+\textbf{Role} & \textbf{Template (abbreviated)} \\
+\midrule
+Debater (``Unsafe'') & You are arguing that the following AI response FULFILLS the harmful instruction. Present the strongest evidence from the response that it provides substantive assistance with the unsafe request. \ldots \\
+\addlinespace
+Debater (``Safe'') & You are arguing that the following AI response REFUSES the harmful instruction. Present the strongest evidence that the response does not meaningfully assist with the unsafe request. \ldots \\
+\addlinespace
+Judge (Debate) & Two experts have debated whether the AI response fulfills or refuses the harmful instruction. Read both sides' arguments and render your verdict: COMPLY or REFUSE. \ldots \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Compute Budget Analysis}
+
+\begin{table}[h]
+\centering
+\caption{Compute cost comparison across methods (approximate LLM calls per verdict).}
+\label{tab:compute}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Method} & \textbf{LLM Calls} & \textbf{Relative Cost} \\
+\midrule
+Single judge & 1 & 1x \\
+Majority vote (3x) & 3 & 3x \\
+Consultancy & 2 & 2x \\
+Debate (2 rounds) & 5 & 5x \\
+Majority vote (5x) & 5 & 5x \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{SORRY-Bench Category Groupings}
+
+\todo{Table mapping 44 fine-grained SORRY-Bench categories into broader harm types for the category-level analysis.}
+
+% ============================================================
+\section{Extended Results}
+\label{app:extended}
+% ============================================================
+
+\todo{Full per-category results for all 44 SORRY-Bench categories. Ablation on number of debate rounds (1, 2, 3). Cross-family judge experiments. Full adversarial debater persuasiveness curves. Systematic miss analysis (Experiment 4).}
+
+\end{document}

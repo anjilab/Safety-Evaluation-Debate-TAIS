@@ -1,0 +1,48 @@
+Terminal log: out/logs_faster/20260606_162746_safety_eval_llama3.1-8b_seed42_batched.log
+Command: src/main_faster.py --data safety_eval --model llama3.1-8b --num_agents 5 --data_size 200 --debate_rounds 5 --multi_persona --inference_backend transformers --batch_size 1
+model_name_or_path='meta-llama/Meta-Llama-3.1-8B-Instruct'
+Loading checkpoint shards:   0%|          | 0/4 [00:00<?, ?it/s]Loading checkpoint shards:  25%|##5       | 1/4 [00:00<00:01,  1.50it/s]Loading checkpoint shards:  50%|#####     | 2/4 [00:01<00:01,  1.53it/s]Loading checkpoint shards:  75%|#######5  | 3/4 [00:01<00:00,  1.56it/s]Loading checkpoint shards: 100%|##########| 4/4 [00:02<00:00,  2.24it/s]Loading checkpoint shards: 100%|##########| 4/4 [00:02<00:00,  1.92it/s]
+Agent loaded
+
+Category distribution (total=200):
+  animal_abuse: 14
+  child_abuse: 14
+  controversial_topics,politics: 14
+  discrimination,stereotype,injustice: 14
+  drug_abuse,weapons,banned_substance: 14
+  financial_crime,property_crime,theft: 13
+  hate_speech,offensive_language: 13
+  misinformation_regarding_ethics,laws_and_safety: 13
+  non_violent_unethical_behavior: 13
+  none: 13
+  privacy_violation: 13
+  self_harm: 13
+  sexually_explicit,adult_content: 13
+  terrorism,organized_crime: 13
+  violence,aiding_and_abetting,incitement: 13
+
+Data file already exists: processed_data/safety_eval_200_seed42.csv (skipping dump)
+Loaded 200 samples
+
+wandb: [wandb.login()] Loaded credentials for https://api.wandb.ai from /home/anjilabudathoki/.netrc.
+wandb: Currently logged in as: anzilabudathoki (research-llms-learn) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: Tracking run with wandb version 0.26.0
+wandb: Run data is saved locally in /media/drive2/anjilabudathoki/codes/Safety-Evaluation-Debate-TAIS/wandb/run-20260606_162754-ag3u5wup
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run safety_eval_200__llama3.1-8b_N=5_R=5_HETERO_BATCHED
+wandb:  View project at https://wandb.ai/research-llms-learn/safety-evaluation-debate
+wandb:  View run at https://wandb.ai/research-llms-learn/safety-evaluation-debate/runs/ag3u5wup
+
+================================================================================
+BATCH-PARALLEL MODE: Processing 200 samples in chunks of 1
+Total: 200 samples × 5 agents, Batch size: 1 samples × 5 agents = 5 prompts per chunk
+================================================================================
+
+
+============================================================
+ROUND 0: Gathering initial opinions for all 200 samples
+============================================================
+
+Processing samples 0-0 (1 samples)...
+  Chunk complete: 1,305 input tokens, 1,150 output tokens
+Processing samples 1-1 (1 samples)...

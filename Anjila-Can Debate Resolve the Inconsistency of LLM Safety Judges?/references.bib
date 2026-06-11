@@ -1,0 +1,288 @@
+% ============================================================
+% References for:
+%   "Can Debate Resolve the Inconsistency of LLM Safety Judges?"
+%
+% Sources:
+%   - Core debate and scalable oversight literature
+%   - LLM-as-judge and safety evaluation literature
+%   - Safety verdict instability literature
+%   - Information design and Bayesian persuasion
+%   - User's own work (Strategic Abstraction, Coalitional Agency)
+%   - Additional references from the reading list
+% ============================================================
+
+
+% ====================== Debate & Scalable Oversight ======================
+
+@article{irving2018debate,
+  title     = {{AI} Safety via Debate},
+  author    = {Irving, Geoffrey and Christiano, Paul and Amodei, Dario},
+  journal   = {arXiv preprint arXiv:1805.00899},
+  year      = {2018}
+}
+
+@article{khan2024debating,
+  title     = {Debating with More Persuasive {LLM}s Leads to More Truthful Answers},
+  author    = {Khan, Akbir and Hughes, John and Valentine, Dan and Ruis, Laura and Sachan, Kshitij and Radhakrishnan, Ansh and Grefenstette, Edward and Bowman, Samuel R. and Rockt{\"a}schel, Tim and Perez, Ethan},
+  journal   = {arXiv preprint arXiv:2402.06782},
+  year      = {2024}
+}
+
+@article{du2023debate,
+  title     = {Improving Factuality and Reasoning in Language Models through Multiagent Debate},
+  author    = {Du, Yilun and Li, Shuang and Torralba, Antonio and Tenenbaum, Joshua B. and Mordatch, Igor},
+  journal   = {arXiv preprint arXiv:2305.14325},
+  year      = {2023}
+}
+
+@misc{debateqd2025,
+      title={Optimizing for Persuasion Improves LLM Generalization: Evidence from Quality-Diversity Evolution of Debate Strategies}, 
+      author={Aksel Joonas Reedi and Corentin Léger and Julien Pourcel and Loris Gaven and Perrine Charriau and Guillaume Pourcel},
+      year={2025},
+      eprint={2510.05909},
+      archivePrefix={arXiv},
+      primaryClass={cs.AI},
+      url={https://arxiv.org/abs/2510.05909}, 
+}
+
+@article{michael2023debate,
+  title     = {Debate Helps Supervise Unreliable Experts},
+  author    = {Michael, Julian and Mahdi, Salsabila and Rein, David and Jackson, Max and Petty, Julien and Dirani, Jasmine and Padmakumar, Vishakh and Bowman, Samuel R.},
+  journal   = {arXiv preprint arXiv:2311.08702},
+  year      = {2023}
+}
+
+
+% ====================== Information Design & Bayesian Persuasion ======================
+
+@article{hossain2024persuasion,
+  title     = {A Persuasive Approach to Combating Misinformation},
+  author    = {Hossain, Safwan and Mladenovic, Andjela and Chen, Yiling and Gidel, Gauthier},
+  journal   = {arXiv preprint arXiv:2310.12065},
+  year      = {2024}
+}
+
+@article{kamenica2011bayesian,
+  title     = {Bayesian Persuasion},
+  author    = {Kamenica, Emir and Gentzkow, Matthew},
+  journal   = {American Economic Review},
+  volume    = {101},
+  number    = {6},
+  pages     = {2590--2615},
+  year      = {2011}
+}
+
+
+% ====================== LLM-as-Judge ======================
+
+@inproceedings{zheng2023judging,
+  title     = {Judging {LLM}-as-a-Judge with {MT}-Bench and Chatbot Arena},
+  author    = {Zheng, Lianmin and Chiang, Wei-Lin and Sheng, Ying and Zhuang, Siyuan and Wu, Zhanghao and Zhuang, Yonghao and Lin, Zi and Li, Zhuohan and Li, Dacheng and Xing, Eric and Zhang, Hao and Gonzalez, Joseph E. and Stoica, Ion},
+  booktitle = {Advances in Neural Information Processing Systems (NeurIPS)},
+  volume    = {36},
+  year      = {2023}
+}
+
+@article{verga2024juries,
+  title     = {Replacing Judges with Juries: Evaluating {LLM} Generations with a Panel of Diverse Models},
+  author    = {Verga, Pat and Hofstatter, Sebastian and Althammer, Sophia and Su, Yixuan and Arakelyan, Aleksandra and Sun, Arnab and Srinivasan, Hema and Choi, Jina and Xie, Fei and Tao, Yizhong},
+  journal   = {arXiv preprint arXiv:2404.18796},
+  year      = {2024}
+}
+
+
+% ====================== Safety Evaluation Benchmarks ======================
+
+@inproceedings{sorry2025,
+  title     = {{SORRY}-Bench: Systematically Evaluating Large Language Model Safety Refusal Behaviors},
+  author    = {Xie, Tinghao and Qi, Xiangyu and Zeng, Yi and Huang, Yangsibo and Swanson, Kyle and Henderson, Peter and Jia, Ruoxi and Mittal, Prateek},
+  booktitle = {Proceedings of the 13th International Conference on Learning Representations (ICLR)},
+  year      = {2025}
+}
+
+@inproceedings{mazeika2024harmbench,
+  title     = {{HarmBench}: A Standardized Evaluation Framework for Automated Red Teaming and Robust Refusal},
+  author    = {Mazeika, Mantas and Phan, Long and Yin, Xuwang and Zou, Andy and Wang, Zifan and Mu, Norman and Sakhaee, Elham and Li, Nathaniel and Basart, Steven and Li, Bo and others},
+  booktitle = {Proceedings of the 41st International Conference on Machine Learning (ICML)},
+  year      = {2024}
+}
+
+@inproceedings{sgbench2024,
+  title     = {{SG-Bench}: Evaluating {LLM} Safety Generalization Across Diverse Tasks and Prompt Types},
+  author    = {Yao, Yutao and Chen, Jieming and Ye, Shunyu and Liu, Zilong},
+  booktitle = {Advances in Neural Information Processing Systems (NeurIPS), Datasets and Benchmarks Track},
+  year      = {2024}
+}
+
+
+% ====================== Safety Verdict Instability ======================
+
+@article{dorner2025instability,
+  title     = {The Instability of Safety: How Random Seeds and Temperature Expose Inconsistent {LLM} Refusal Behavior},
+  author    = {D{\"o}rner, Florian E. and others},
+  journal   = {arXiv preprint arXiv:2512.12066},
+  year      = {2025}
+}
+
+@article{raina2025artifacts,
+  title     = {Safer or Luckier? {LLM}s as Safety Evaluators Are Not Robust to Artifacts},
+  author    = {Raina, Vatsal and others},
+  journal   = {arXiv preprint arXiv:2503.09347},
+  year      = {2025}
+}
+
+@article{munoz2025jrh,
+  title     = {Judge Reliability Harness: Stress Testing the Reliability of {LLM} Judges},
+  author    = {Mu{\~n}oz, Francisco and others},
+  journal   = {arXiv preprint arXiv:2603.05399},
+  year      = {2025}
+}
+
+
+% ====================== Safety Alignment & Fragility ======================
+
+@article{amodei2016concrete,
+  title     = {Concrete Problems in {AI} Safety},
+  author    = {Amodei, Dario and Olah, Chris and Steinhardt, Jacob and Christiano, Paul and Schulman, John and Man{\'e}, Dan},
+  journal   = {arXiv preprint arXiv:1606.06565},
+  year      = {2016}
+}
+
+@inproceedings{qi2024finetuning,
+  title     = {Fine-Tuning Aligned Language Models Compromises Safety, Even When Users Do Not Intend To},
+  author    = {Qi, Xiangyu and Zeng, Yi and Xie, Tinghao and Chen, Pin-Yu and Jia, Ruoxi and Mittal, Prateek and Henderson, Peter},
+  booktitle = {Proceedings of the 12th International Conference on Learning Representations (ICLR)},
+  year      = {2024}
+}
+
+@article{arditi2024refusal,
+  title     = {Refusal in Language Models Is Mediated by a Single Direction},
+  author    = {Arditi, Andy and Obeso, Oscar and Nanda, Neel and others},
+  journal   = {arXiv preprint arXiv:2406.11717},
+  year      = {2024}
+}
+
+@article{zou2023representation,
+  title     = {Representation Engineering: A Top-Down Approach to {AI} Transparency},
+  author    = {Zou, Andy and Phan, Long and Chen, Sarah and Campbell, James and Guo, Phillip and Ren, Richard and Pan, Alexander and Yin, Xuwang and Mazeika, Mantas and Dombrowski, Ann-Kathrin and others},
+  journal   = {arXiv preprint arXiv:2310.01405},
+  year      = {2023}
+}
+
+@article{zou2023universal,
+  title     = {Universal and Transferable Adversarial Attacks on Aligned Language Models},
+  author    = {Zou, Andy and Wang, Zifan and Kolter, J. Zico and Fredrikson, Matt},
+  journal   = {arXiv preprint arXiv:2307.15043},
+  year      = {2023}
+}
+
+
+% ====================== RLHF & Preference Optimization ======================
+
+@inproceedings{ouyang2022instructgpt,
+  title     = {Training Language Models to Follow Instructions with Human Feedback},
+  author    = {Ouyang, Long and Wu, Jeff and Jiang, Xu and Almeida, Diogo and Wainwright, Carroll L. and Mishkin, Pamela and Zhang, Chong and Agarwal, Sandhini and Slama, Katarina and Ray, Alex and others},
+  booktitle = {Advances in Neural Information Processing Systems (NeurIPS)},
+  volume    = {35},
+  pages     = {27730--27744},
+  year      = {2022}
+}
+
+@inproceedings{christiano2017deep,
+  title     = {Deep Reinforcement Learning from Human Preferences},
+  author    = {Christiano, Paul and Leike, Jan and Brown, Tom B. and Martic, Miljan and Legg, Shane and Amodei, Dario},
+  booktitle = {Advances in Neural Information Processing Systems (NeurIPS)},
+  volume    = {30},
+  year      = {2017}
+}
+
+
+% ====================== Models ======================
+
+@article{gemma2024,
+  title     = {Gemma 2: Improving Open Language Models at a Practical Size},
+  author    = {{Gemma Team, Google DeepMind}},
+  journal   = {arXiv preprint arXiv:2408.00118},
+  year      = {2024}
+}
+
+@article{llama3,
+  title     = {The {L}lama 3 Herd of Models},
+  author    = {{Meta AI}},
+  journal   = {arXiv preprint arXiv:2407.21783},
+  year      = {2024}
+}
+
+@inproceedings{tanwisuth2025arlet,
+  title     = {Uncertainty-Aware Policy-Preserving Abstractions with Abstention for One-Shot Decisions},
+  author    = {Tanwisuth, Sandy and Leja, Daniel K.},
+  booktitle = {Workshop on Aligning Reinforcement Learning Experimentalists and Theorists (ARLET)},
+  year      = {2025},
+  note      = {Update with real author names and venue details once de-anonymized}
+}
+
+
+% ====================== Jailbreaking & Red Teaming ======================
+
+@article{chao2024jailbreaking,
+  title     = {Jailbreaking Black Box Large Language Models in Twenty Queries},
+  author    = {Chao, Patrick and Robey, Alexander and Dobriban, Edgar and Hassani, Hamed and Pappas, George J. and Wong, Eric},
+  journal   = {arXiv preprint arXiv:2310.08419},
+  year      = {2024}
+}
+
+@article{liu2024autodan,
+  title     = {{AutoDAN}: Generating Stealthy Jailbreak Prompts on Aligned Large Language Models},
+  author    = {Liu, Xiaogeng and Xu, Nan and Chen, Muhao and Xiao, Chaowei},
+  journal   = {arXiv preprint arXiv:2310.04451},
+  year      = {2024}
+}
+
+@article{wildguard2024,
+  title     = {{WildGuard}: Open One-Stop Moderation Tools for Safety Risks, Jailbreaks, and Refusals of {LLM}s},
+  author    = {Han, Seungju and Kim, Kavel and Hovy, Eduard and others},
+  journal   = {arXiv preprint arXiv:2406.18495},
+  year      = {2024}
+}
+
+
+% ====================== Multi-Agent Systems & Game Theory ======================
+
+@article{ngo2023alignment,
+  title     = {The Alignment Problem from a Deep Learning Perspective},
+  author    = {Ngo, Richard and Chan, Lawrence and Gleave, Adam},
+  journal   = {arXiv preprint arXiv:2209.00626},
+  year      = {2023}
+}
+
+@inproceedings{pan2022reward,
+  title     = {The Effects of Reward Misspecification: Mapping and Mitigating Misaligned Models},
+  author    = {Pan, Alexander and Bhatia, Kush and Steinhardt, Jacob},
+  booktitle = {Proceedings of the 10th International Conference on Learning Representations (ICLR)},
+  year      = {2022}
+}
+
+@article{lin2025efficient,
+  title={Efficient LLM Safety Evaluation through Multi-Agent Debate},
+  author={Lin, Dachuan and Shen, Guobin and Yang, Zihao and Liu, Tianrong and Zhao, Dongcheng and Zeng, Yi},
+  journal={arXiv preprint arXiv:2511.06396},
+  year={2025}
+}
+
+
+% ====================== Evaluation Methodology ======================
+
+@article{li2023alpacaeval,
+  title     = {{AlpacaEval}: An Automatic Evaluator of Instruction-Following Models},
+  author    = {Li, Xuechen and Zhang, Tianyi and Dubois, Yann and Taori, Rohan and Gulrajani, Ishaan and Guestrin, Carlos and Liang, Percy and Hashimoto, Tatsunori B.},
+  journal   = {arXiv preprint arXiv:2306.05685},
+  year      = {2023}
+}
+
+@article{beavertails2024,
+  title     = {{BeaverTails}: Towards Improved Safety Alignment of {LLM} via a Human-Preference Dataset},
+  author    = {Ji, Jiaming and Liu, Mickel and Dai, Juntao and Pan, Xuehai and Zhang, Chi and Bian, Ce and Sun, Ruiyang and Wang, Yizhou and Yang, Yaodong},
+  journal   = {Advances in Neural Information Processing Systems (NeurIPS)},
+  volume    = {36},
+  year      = {2024}
+}

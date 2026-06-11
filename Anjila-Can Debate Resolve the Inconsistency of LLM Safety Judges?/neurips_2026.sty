@@ -1,0 +1,88 @@
+% neurips_2026.sty - Style file for NeurIPS 2026
+% Based on the official NeurIPS style
+
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{neurips_2026}[2026/01/01 NeurIPS 2026 submission style]
+
+\newif\if@neuripsfinal\@neuripsfinalfalse
+\DeclareOption{final}{\@neuripsfinaltrue}
+\DeclareOption{preprint}{\@neuripsfinalfalse}
+\ProcessOptions\relax
+
+% Page layout
+\RequirePackage[verbose=true,letterpaper]{geometry}
+\AtBeginDocument{
+  \newgeometry{
+    textheight=9in,
+    textwidth=5.5in,
+    top=1in,
+    headheight=12pt,
+    headsep=25pt,
+    footskip=30pt
+  }
+}
+
+% Fonts and math
+\RequirePackage{times}
+\RequirePackage{amsmath,amssymb,amsfonts}
+
+% Title formatting
+\def\@maketitle{%
+  \vbox to \titlebox{%
+    \vskip 0.5in
+    \begin{center}
+      {\LARGE\bf \@title \par}
+      \vskip 0.5em
+      \if@neuripsfinal
+        {\large\lineskip .5em%
+          \begin{tabular}[t]{c}%
+            \@author
+          \end{tabular}\par}
+      \else
+        {\large Anonymous Author(s)\\
+        \vskip 0.2em
+        Anonymous Institution\\}
+      \fi
+      \vskip 0.5em
+      {\large \@date}
+    \end{center}
+    \vskip 0.5in
+  }}
+
+\newlength{\titlebox}
+\setlength{\titlebox}{2.5in}
+
+% Section formatting
+\renewcommand\section{\@startsection{section}{1}{\z@}%
+  {-2.0ex \@plus -0.5ex \@minus -0.2ex}%
+  {1.5ex \@plus 0.3ex \@minus 0.2ex}%
+  {\large\bf\raggedright}}
+\renewcommand\subsection{\@startsection{subsection}{2}{\z@}%
+  {-1.8ex \@plus -0.5ex \@minus -0.2ex}%
+  {0.8ex \@plus 0.2ex}%
+  {\normalsize\bf\raggedright}}
+\renewcommand\subsubsection{\@startsection{subsubsection}{3}{\z@}%
+  {-1.5ex \@plus -0.5ex \@minus -0.2ex}%
+  {0.5ex \@plus 0.2ex}%
+  {\normalsize\bf\raggedright}}
+
+% Abstract
+\renewenvironment{abstract}%
+  {\vskip 0.075in\centerline{\large\bf Abstract}\vspace{0.5ex}%
+    \begin{quote}}
+  {\par\end{quote}\vskip 1ex}
+
+% Line numbers for review
+\if@neuripsfinal\else
+  \RequirePackage{lineno}
+  \linenumbers
+\fi
+
+% Footnotes
+\renewcommand{\footnoterule}{%
+  \kern -3pt
+  \hrule width 2in height 0.4pt
+  \kern 2.6pt
+}
+
+\endinput
